@@ -498,32 +498,46 @@ function connect_action_content_replace(&$parent, &$child, $op='', $target='chil
     case 'requires' :
       $return = array();
       $return['parent'] = array(
-        'data_replace_parent' => 'Content replace: the content that can be rewritten.',
-     );
+        'subject_replace_parent' => 'Content replace: the subject that can be rewritten.',
+        'body_replace_parent' => 'Content replace: the body that can be rewritten.',
+      );
       $return['child']  = array(
-        'data_replace_child' => 'Content replace: the participant\'s version.',
-     );
-      return $return;
+        'subject_replace_child' => 'Content replace: the subject participant\'s version.',
+        'body_replace_child' => 'Content replace: the body participant\'s version.',
+      );
+    return $return;
 
-	case 'form_alter':
-		$map   = connect_get_map($parent->nid);
-    $field = $map['data_replace_child'];
-    $key   = connect_get_field_keys($field);
-    
-    // filter text if required
-		$cck_info = _content_type_info();
-		$cck_vars = $cck_info['content types'][connect_node_options($parent->nid, 'participant_type')]['fields'];
-    $text = connect_value('data_replace_parent', $parent, $child, 'parent');
-		if ($cck_vars[$field]['text_processing'] == 0) $text = strip_tags($text);
-		$child[$field][0]['#default_value']['value'] = $text;
+    case 'form_alter':
+      $map   = connect_get_map($parent->nid);
+      $field = array(
+        'subject' => $map['subject_replace_child'],
+        'body' => $map['body_replace_child'],
+      );
+      $key   = connect_get_field_keys($field);
+      
+      // filter text if required
+      $cck_info = _content_type_info();
+      $cck_vars = $cck_info['content types'][connect_node_options($parent->nid, 'participant_type')]['fields'];
+      $text = array(
+        'subject' => connect_value('subject_replace_parent', $parent, $child, 'parent'),
+        'body' => connect_value('body_replace_parent', $parent, $child, 'parent'),
+      );
+      if ($cck_vars[$field['subject']]['text_processing'] == 0) $text['subject'] = strip_tags($text['subject']);
+      if ($cck_vars[$field['body']]['text_processing'] == 0) $text['body'] = strip_tags($text['body']);
+      $child[$field['subject']][0]['#default_value']['value'] = $text['subject'];
+      $child[$field['body']][0]['#default_value']['value'] = $text['body'];
     break;
 
-   case 'insert' :
-     if ($target == 'child') {
-       $addition = connect_value('data_replace_child', $parent, $child, 'child');
-       connect_value('data_replace_parent', $parent, $child, 'parent', $addition);
-     }
-     break;
+    case 'insert' :
+      if ($target == 'child') {
+        $addition = array(
+          'subject' => connect_value('subject_replace_child', $parent, $child, 'child'),
+          'body' => connect_value('body_replace_child', $parent, $child, 'child'),
+        );
+        connect_value('subject_replace_parent', $parent, $child, 'parent', $addition['subject']);
+        connect_value('body_replace_parent', $parent, $child, 'parent', $addition['body']);
+      }
+    break;
   }
 }
 
@@ -706,8 +720,7 @@ function connect_action_send_email(&$parent, &$child, $op = '', $target = 'child
       foreach ($mail_op_list as $action) {
         $lookup_actions[$action] = $action;
       }
-
-      // setup for lookup function
+      
       $return['variables']['email_lookup'] = array(
         '#type'  => 'fieldset',
         '#title' => 'Target lookup',
