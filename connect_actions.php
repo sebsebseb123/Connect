@@ -513,7 +513,6 @@ function connect_action_content_replace(&$parent, &$child, $op='', $target='chil
         'subject' => $map['subject_replace_child'],
         'body' => $map['body_replace_child'],
       );
-      $key   = connect_get_field_keys($field);
       
       // filter text if required
       $cck_info = _content_type_info();
